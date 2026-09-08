@@ -38,3 +38,13 @@ We looked into running posture issues to understand the relevant landmarks. Only
 
 7. **Arm signal**
    Arm swing forward/backward - swing amplitude & angle
+
+Day 2 
+Define events and segments that we need to extract:
+{
+  "initial_contacts": [frame_i, frame_j, ...],
+  "toe_offs": [frame_k, frame_l, ...],
+  "stance_phases": [(contact, toe_off), ...],
+  "swing_phases": [(toe_off, next_contact), ...],
+  "stride_cycles": [(contact_n, contact_n+1), ...]
+}
