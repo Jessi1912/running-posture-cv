@@ -386,3 +386,19 @@ def plot_toe_off_combined(y_smooth, candidates, toe_off_frames, velocity, label=
     plt.tight_layout()
     plt.show()
 
+def plot_trunk_lean(trunk_lean_deg, threshold_deg):
+    """
+    Plots trunk lean over time with excess forward/backward lean thresholds,
+    and returns the frame indices where lean exceeds each threshold.
+    """
+    plt.figure(figsize=(12, 4))
+    plt.plot(trunk_lean_deg, color="tab:green", label="Trunk lean (deg)")
+    plt.axhline(0, color="gray", linestyle=":", label="Upright")
+    plt.axhline(threshold_deg, color="red", linestyle="--", linewidth=1, label="Excess forward lean")
+    plt.axhline(-threshold_deg, color="orange", linestyle="--", linewidth=1, label="Excess backward lean")
+    plt.xlabel("Frame")
+    plt.ylabel("Lean from vertical (deg)")
+    plt.title("Trunk Lean Over Time (+ = forward, - = backward)")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()

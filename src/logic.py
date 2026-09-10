@@ -1,5 +1,69 @@
 
 import numpy as np
+from scipy.signal import savgol_filter
+
+def extract_keypoint_coords(processed_frames, keypoint_idx, conf_thresh=0.5):
+    """Pull x, y, conf for one ankle across all frames."""
+    xs, ys, confs = [], [], []
+    for result in processed_frames:
+        if result.keypoints is None or len(result.keypoints.xy) == 0:
+            xs.append(np.nan); ys.append(np.nan); confs.append(0)
+            continue
+        kp_xy = result.keypoints.xy[0]      # first detected person
+        kp_conf = result.keypoints.conf[0]  # per-keypoint confidence
+
+        x, y = kp_xy[keypoint_idx].tolist()
+        c = kp_conf[keypoint_idx].item()
+
+        if c < conf_thresh:
+            xs.append(np.nan); ys.append(np.nan)  # mark low-confidence as missing
+        else:
+            xs.append(x); ys.append(y)
+        confs.append(c)
+    return np.array(xs), np.array(ys), np.array(confs)
+
+
+def interpolate_missing(coords, label="coords"):
+    """Fill NaNs (low-confidence/missing detections) via linear interpolation."""
+    coords = coords.copy()
+    nans = np.isnan(coords)
+    n_missing = nans.sum()
+    print(f"{label}: {n_missing} / {len(coords)} points interpolated "
+          f"({n_missing/len(coords)*100:.1f}%)")
+    if nans.any():
+        idx = np.arange(len(coords))
+        coords[nans] = np.interp(idx[nans], idx[~nans], coords[~nans])
+    return coords
+
+
+def smooth_coords(coords, window_length=7, polyorder=2):
+    """Savitzky-Golay smoothing. window_length must be odd and > polyorder."""
+    window_length = min(window_length, len(coords) if len(coords) % 2 == 1 else len(coords) - 1)
+    return savgol_filter(coords, window_length=window_length, polyorder=polyorder)
+
+def extract_smoothed_keypoint_coords(processed_frames, keypoint_idx, conf_thresh=0.5, label="coords"):
+    """Extract, interpolate and smooth x/y for one keypoint. Returns (x_smooth, y_smooth, conf)."""
+    x_raw, y_raw, conf = extract_keypoint_coords(processed_frames, keypoint_idx, conf_thresh)
+    x_filled = interpolate_missing(x_raw, label=f"{label} X")
+    y_filled = interpolate_missing(y_raw, label=f"{label} Y")
+    x_smooth = smooth_coords(x_filled)
+    y_smooth = smooth_coords(y_filled)
+    return x_smooth, y_smooth, conf
+
+def estimate_stride_frames_from_contacts(contacts, fps):
+    """
+    Estimate the average stride frame gap from already-detected foot-contact
+    peaks (left_contacts / right_contacts), instead of assuming a fixed cadence.
+    """
+    contacts = np.asarray(contacts)
+    if len(contacts) < 2:
+        raise ValueError("Need at least 2 contacts to estimate stride timing")
+
+    avg_gap = np.mean(np.diff(contacts))
+    cadence_spm = cadence_from_stride_gap(avg_gap, fps)   # <-- was inlined as (fps / avg_gap) * 60
+    print(f"Estimated {cadence_spm:.0f} contacts/min for this foot, avg gap: {avg_gap:.1f} frames")
+
+    return avg_gap
 
 def calculate_overstriding(ankle_x, hip_x, contact_frames, leg_lengths, threshold):
     results = []
