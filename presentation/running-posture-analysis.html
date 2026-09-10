@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Running Posture Analysis</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --paper:#EDEAE2;
+    --ink:#1C1B18;
+    --ink-soft:#5C5A52;
+    --accent:#E8491D;
+    --track:#24463B;
+    --line:#C9C4B6;
+    --paper-raised:#F5F3EC;
+  }
+
+  * { box-sizing: border-box; }
+
+  .reveal { background: var(--paper); color: var(--ink); font-family: 'IBM Plex Sans', sans-serif; font-size: 26pt; }
+  .reveal .slides { text-align: left; }
+  .reveal .slides section { padding: 40px 64px; height: 100%; display:flex; flex-direction:column; justify-content:center; overflow-wrap:break-word; }
+  .reveal img, .reveal video, .reveal svg, .reveal table { max-width:100%; }
+
+  h1,h2,h3 { font-family:'Big Shoulders Display', sans-serif; font-weight:800; text-transform:none; letter-spacing:0.5px; color:var(--ink); margin:0; line-height:0.95; }
+  .reveal h1 { font-size:2.6em; }
+  .reveal h2 { font-size:1.9em; border-bottom:4px solid var(--accent); padding-bottom:14px; display:inline-block; margin-bottom:32px; }
+  .reveal h3 { font-size:1.5em; font-weight:700; }
+  .reveal p, .reveal li { font-family:'IBM Plex Sans'; font-size:0.85em; line-height:1.5; color:var(--ink); }
+  .reveal ul { margin-left:0; }
+  .reveal li { margin-bottom:12px; list-style:none; padding-left:26px; position:relative; }
+  .tight-list li { margin-bottom:6px; }
+  .reveal li::before { content:"—"; position:absolute; left:0; color:var(--accent); font-weight:700; }
+
+  .mono { font-family:'IBM Plex Mono', monospace; }
+
+  /* pipeline breadcrumb */
+  .pipeline { display:flex; gap:6px; margin-bottom:28px; font-family:'IBM Plex Mono'; font-size:0.5em; }
+  .pipeline span { padding:5px 12px; border:1px solid var(--line); color:var(--ink-soft); background:var(--paper-raised); }
+  .pipeline span.active { border-color:var(--accent); color:var(--paper); background:var(--accent); font-weight:600; }
+
+  .kicker { font-family:'IBM Plex Mono'; font-size:0.6em; color:var(--accent); letter-spacing:1px; margin-bottom:8px; }
+
+  .grid2 { display:grid; grid-template-columns:1.1fr 0.9fr; gap:44px; align-items:start; }
+  .grid2-even { display:grid; grid-template-columns:1fr 1fr; gap:44px; align-items:start; }
+
+  .stat-block { border-left:3px solid var(--accent); padding-left:20px; margin:16px 0; }
+  .stat-num { font-family:'Big Shoulders Display'; font-weight:800; font-size:2.4em; color:var(--track); line-height:1; }
+  .stat-label { font-family:'IBM Plex Mono'; font-size:0.6em; color:var(--ink-soft); margin-top:6px; }
+
+  .card { background:var(--paper-raised); border:1px solid var(--line); padding:22px 24px; }
+  .card h4 { font-family:'IBM Plex Mono'; font-size:0.65em; color:var(--accent); margin:0 0 10px 0; letter-spacing:0.5px; }
+  .card p { font-size:0.85em; }
+
+  .video-slot { border:2px dashed var(--line); background:var(--paper-raised); aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; color:var(--ink-soft); font-family:'IBM Plex Mono'; font-size:0.6em; text-align:center; padding:20px; }
+  .video-slot video { width:100%; height:100%; object-fit:cover; display:none; }
+  .video-slot.has-video { border-style:solid; border-color:var(--ink); padding:0; }
+  .video-slot.has-video video { display:block; }
+
+  .compare-table { width:100%; border-collapse:collapse; font-size:0.62em; }
+  .compare-table th { font-family:'IBM Plex Mono'; text-align:left; font-size:0.75em; color:var(--ink-soft); padding:6px 14px; border-bottom:2px solid var(--ink); }
+  .compare-table td { padding:7px 14px; border-bottom:1px solid var(--line); line-height:1.3; }
+  .compare-table tr.winner td:first-child { border-left:3px solid var(--track); }
+  .compare-table .yes { color:var(--track); font-weight:600; }
+  .compare-table .no { color:var(--ink-soft); }
+
+  .skeleton-wrap { display:flex; align-items:center; justify-content:center; }
+  .skeleton-wrap svg { width:100%; max-width:300px; }
+  .kp-label { font-family:'IBM Plex Mono'; font-size:13px; fill:var(--ink); }
+  .kp-dot { fill:var(--accent); }
+  .kp-line { stroke:var(--ink); stroke-width:3; }
+
+  .flow { display:flex; align-items:center; gap:10px; font-family:'IBM Plex Mono'; font-size:0.65em; flex-wrap:wrap; margin:20px 0; }
+  .flow .node { border:1px solid var(--ink); padding:8px 14px; background:var(--paper-raised); }
+  .flow .arrow { color:var(--accent); font-weight:700; }
+  .phase-bar { display:flex; height:46px; border:1px solid var(--ink); margin:18px 0; }
+  .phase-bar div { display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono'; font-size:0.55em; color:var(--paper); }
+  .stance { background:var(--track); flex:0.4; }
+  .swing { background:var(--accent); flex:0.6; }
+
+  .misposture-nav { font-family:'IBM Plex Mono'; font-size:0.55em; color:var(--ink-soft); margin-bottom:20px; }
+  .misposture-num { font-family:'Big Shoulders Display'; font-weight:800; font-size:4.5em; color:var(--line); position:absolute; top:30px; right:60px; line-height:1; }
+  .signal-tag { display:inline-block; font-family:'IBM Plex Mono'; font-size:0.6em; background:var(--ink); color:var(--paper); padding:6px 14px; margin-top:16px; }
+
+  .output-slot { border:2px dashed var(--line); background:var(--paper-raised); height:190px; display:flex; align-items:center; justify-content:center; color:var(--ink-soft); font-family:'IBM Plex Mono'; font-size:0.55em; text-align:center; padding:20px; }
+
+  .reflect-grid { display:grid; grid-template-columns:1fr 1fr; gap:26px; }
+  .limit { border-top:3px solid var(--accent); padding-top:12px; }
+  .limit h4 { font-family:'IBM Plex Mono'; font-size:0.65em; margin:0 0 8px 0; }
+  .limit p { font-size:0.78em; }
+
+  .footer-tag { position:absolute; bottom:24px; left:64px; font-family:'IBM Plex Mono'; font-size:0.42em; color:var(--ink-soft); }
+  .reveal .slide-number { font-family:'IBM Plex Mono'; font-size:16px; color:var(--ink-soft); background:transparent; }
+  .source-tag { font-family:'IBM Plex Mono'; font-size:0.55em; color:var(--ink-soft); margin-top:20px; }
+  a { color: var(--track); }
+
+  .title-grid { display:grid; grid-template-columns:1.15fr 0.85fr; gap:48px; align-items:center; height:100%; }
+  .title-slide h1 { font-size:2.5em; margin-top:18px; }
+  .title-image { height:560px; border:1px solid var(--line); overflow:hidden; }
+  .title-image img { width:100%; height:100%; object-fit:cover; display:block; }
+  .title-meta { margin-top:36px; font-family:'IBM Plex Mono'; font-size:0.65em; color:var(--ink-soft); }
+  .title-meta .when-where { margin-bottom:18px; }
+  .title-meta .names { color:var(--ink); font-size:1.1em; letter-spacing:0.5px; }
+  .title-meta .names span { color:var(--accent); }
+
+  .frame-shot { max-width:260px; margin:0 auto; }
+  .frame-shot img { width:100%; aspect-ratio:1/1; object-fit:cover; border:1px solid var(--ink); display:block; }
+  .frame-label { font-family:'IBM Plex Mono'; font-size:0.55em; letter-spacing:1px; color:var(--ink-soft); margin-top:10px; text-align:center; }
+
+  .phase-def { font-family:'IBM Plex Mono'; font-size:0.62em; color:var(--ink-soft); margin-top:20px; line-height:2.1; }
+  .phase-def b { color:var(--ink); }
+  .phase-def .lbl-stance { color:var(--track); font-weight:600; }
+  .phase-def .lbl-swing { color:var(--accent); font-weight:600; }
+
+  .misposture-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:8px; }
+  .mp-item { background:var(--paper-raised); border:1px solid var(--line); padding:16px 18px; }
+  .mp-num { font-family:'Big Shoulders Display'; font-weight:800; font-size:1.8em; color:var(--accent); line-height:1; display:block; margin-bottom:10px; }
+  .mp-item h4 { font-family:'IBM Plex Sans'; font-weight:600; font-size:0.9em; margin:0; color:var(--ink); line-height:1.3; }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+  <!-- SLIDE 1: TITLE -->
+  <section class="title-slide">
+    <div class="kicker">EU4DUAL — COMPUTER VISION PROJECT</div>
+    <div class="title-grid">
+      <div>
+        <h1>Running Posture Analysis</h1>
+        <div class="title-meta">
+          <div class="when-where">11.09.2026 — Joanneum Graz</div>
+          <div class="names">Angel Vellayil Antony <span>&amp;</span> Jessica Noe</div>
+        </div>
+      </div>
+      <div class="title-image">
+        <img src="media/person_running.jpg" alt="Runner on a gravel trail">
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 1.5: RESEARCH PROBLEM / RELEVANCE -->
+  <section>
+    <div class="kicker">MOTIVATION</div>
+    <h2>The Research Problem</h2>
+    <div class="grid2" style="align-items:center;">
+      <div>
+        <p>Incorrect running form can cause joint pain, overuse injuries, and other musculoskeletal problems.</p>
+        <h3 style="color:var(--accent); margin-top:24px;">So — how do we detect bad running form?</h3>
+      </div>
+      <div class="title-image" style="height:340px;">
+        <img src="media/knee-pain.avif" alt="Runner holding a painful knee">
+      </div>
+    </div>
+    <div class="source-tag" style="margin-top:32px;">Source: <strong>Willwacher, S., Kurz, M., Robbin, J., Thelen, M., Hamill, J., Kelly, L., &amp; Mai, P. (2022).</strong> <em>Running-Related Biomechanical Risk Factors for Overuse Injuries in Distance Runners: A Systematic Review Considering Injury Specificity and the Potentials for Future Research.</em> Sports Medicine, 52(8), 1863–1877. <a href="https://doi.org/10.1007/s40279-022-01666-3">doi.org/10.1007/s40279-022-01666-3</a></div>
+  </section>
+
+  <!-- SLIDE 1.7: MISPOSTURES OVERVIEW -->
+  <section>
+    <div class="kicker">SCOPE</div>
+    <h2>Mispostures We Focused On</h2>
+    <p style="font-size:0.75em; margin-bottom:6px;">Six running-form issues drive every downstream signal, logic rule, and output in this project.</p>
+    <div class="misposture-grid">
+      <div class="mp-item">
+        <span class="mp-num">01</span>
+        <h4>Overstriding</h4>
+      </div>
+      <div class="mp-item">
+        <span class="mp-num">02</span>
+        <h4>Knee Flexion at Foot-Strike</h4>
+      </div>
+      <div class="mp-item">
+        <span class="mp-num">03</span>
+        <h4>Vertical Oscillation</h4>
+      </div>
+      <div class="mp-item">
+        <span class="mp-num">04</span>
+        <h4>Trunk Lean</h4>
+      </div>
+      <div class="mp-item">
+        <span class="mp-num">05</span>
+        <h4>Cadence</h4>
+      </div>
+      <div class="mp-item">
+        <span class="mp-num">06</span>
+        <h4>Heel Whip / Kick-Back Height</h4>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 2: DATA -->
+  <section>
+    <div class="pipeline">
+      <span class="active">INPUT</span><span>PERCEPTION</span><span>SIGNAL</span><span>LOGIC &amp; OUTPUT</span>
+    </div>
+    <h2>The Data</h2>
+    <div class="grid2">
+      <div>
+        <ul>
+          <li>Tested the pipeline on a range of <strong>running clips sourced from YouTube</strong> to check robustness across conditions</li>
+          <li>Recorded <strong>our own footage</strong> as the basis for the final prototype and live demo</li>
+          <li>Opted for a <strong>side view</strong> — the standard angle for analyzing stride mechanics</li>
+        </ul>
+      </div>
+      <div class="video-slot has-video">
+        <video controls autoplay loop muted playsinline src="media/running-video.MP4"></video>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 3: PERCEPTION -->
+  <section>
+    <div class="pipeline">
+      <span>INPUT</span><span class="active">PERCEPTION</span><span>SIGNAL</span><span>LOGIC &amp; OUTPUT</span>
+    </div>
+    <h2>Perception</h2>
+    <p style="margin-bottom:18px;">We compared two pose-estimation models before choosing one for the pipeline.</p>
+    <table class="compare-table">
+      <tr><th></th><th>YOLO26n-pose</th><th>MediaPipe</th></tr>
+      <tr><td>Keypoints</td><td>17 body joints</td><td class="yes">33 landmarks</td></tr>
+      <tr><td>Hip / Knee / Ankle / Shoulder</td><td class="yes">✓ covered</td><td class="yes">✓ covered</td></tr>
+      <tr><td>Foot detail (toe, heel)</td><td class="no">not included</td><td class="yes">included</td></tr>
+      <tr><td>Setup &amp; maintenance</td><td class="yes">Installs cleanly via <span class="mono">uv add</span></td><td class="no">Incompatible with the latest Python version; needs a manually downloaded <span class="mono">.task</span> file</td></tr>
+      <tr class="winner"><td>Fit for our mispostures</td><td class="yes">Sufficient</td><td>More than needed</td></tr>
+    </table>
+    <p style="margin-top:14px; font-size:0.68em;"><strong>Decision:</strong> YOLO26n-pose covers every joint our misposture signals need — only <strong>10–20%</strong> of running-posture issues rely on MediaPipe's extra landmarks, so the added complexity wasn't worth it.</p>
+  </section>
+
+  <!-- SLIDE 4: SIGNAL - KEYPOINTS -->
+  <section>
+    <div class="pipeline">
+      <span>INPUT</span><span>PERCEPTION</span><span class="active">SIGNAL</span><span>LOGIC &amp; OUTPUT</span>
+    </div>
+    <h2>Signal — Keypoints</h2>
+    <div class="grid2-even" style="grid-template-columns:1.4fr 0.6fr;">
+      <div>
+        <p style="font-size:0.75em;">Four joints drive the misposture signals in this project:</p>
+        <ul class="tight-list" style="font-size:0.75em;">
+          <li><strong>Shoulder</strong></li>
+          <li><strong>Hip</strong></li>
+          <li><strong>Knee</strong></li>
+          <li><strong>Ankle</strong></li>
+        </ul>
+        <div class="card" style="margin-top:14px; padding:14px 18px;">
+          <h4 style="font-size:0.6em;">PREPROCESSING</h4>
+          <p style="margin:0; font-size:0.72em;">Keypoints retrieved per frame at <span class="mono">conf_threshold = 0.5</span>. Missing points are <strong>interpolated</strong> and coordinates <strong>smoothed</strong> before signal calculation.</p>
+        </div>
+      </div>
+      <div class="skeleton-wrap">
+        <svg viewBox="0 0 200 340">
+          <line class="kp-line" x1="100" y1="60" x2="95" y2="150"/>
+          <line class="kp-line" x1="95" y1="150" x2="105" y2="230"/>
+          <line class="kp-line" x1="105" y1="230" x2="90" y2="310"/>
+          <circle class="kp-dot" cx="100" cy="60" r="7"/>
+          <circle class="kp-dot" cx="95" cy="150" r="7"/>
+          <circle class="kp-dot" cx="105" cy="230" r="7"/>
+          <circle class="kp-dot" cx="90" cy="310" r="7"/>
+          <text class="kp-label" x="112" y="64">Shoulder</text>
+          <text class="kp-label" x="112" y="154">Hip</text>
+          <text class="kp-label" x="118" y="234">Knee</text>
+          <text class="kp-label" x="100" y="314">Ankle</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 5: CONTACT & TOE-OFF -->
+  <section>
+    <div class="pipeline">
+      <span>INPUT</span><span>PERCEPTION</span><span class="active">SIGNAL</span><span>LOGIC &amp; OUTPUT</span>
+    </div>
+    <h2>Contact &amp; Toe-Off</h2>
+    <div class="grid2-even">
+      <div class="frame-shot">
+        <img src="media/keypoints-initial-contact.png" alt="Frame showing initial contact — foot touching down">
+        <div class="frame-label">INITIAL CONTACT</div>
+      </div>
+      <div class="frame-shot">
+        <img src="media/keypoints-toe-off.png" alt="Frame showing toe-off — foot leaving the ground">
+        <div class="frame-label">TOE-OFF</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:22px;">
+      <h4>CHALLENGE</h4>
+      <p style="margin:0;">Detecting contact &amp; toe-off reliably took many iterations. Video quality had a direct impact, and cleanly separating contact from toe-off in ambiguous frames remained the hardest part of the signal layer.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 5.5: PHASES -->
+  <section>
+    <div class="pipeline">
+      <span>INPUT</span><span>PERCEPTION</span><span class="active">SIGNAL</span><span>LOGIC &amp; OUTPUT</span>
+    </div>
+    <h2 style="margin-bottom:18px;">Phases</h2>
+    <div class="phase-bar" style="height:32px; margin:8px 0;">
+      <div class="stance">STANCE</div><div class="swing">SWING</div>
+    </div>
+    <div class="phase-def" style="font-size:0.56em; line-height:1.6; margin-top:10px;">
+      <div><span class="lbl-stance">STANCE</span> = <b>contact</b> → next <b>toe-off</b></div>
+      <div><span class="lbl-swing">SWING</span> = <b>toe-off</b> → next <b>contact</b></div>
+      <div><b>STRIDE CYCLE</b> = <b>contact</b> → next <b>contact</b></div>
+    </div>
+    <div style="margin-top:14px; border:1px solid var(--line); background:#fff; text-align:center;">
+      <img src="media/cycles.png" alt="Gait segments timeline for left and right leg, showing stance, swing, and stride cycle" style="max-width:100%; max-height:280px; display:inline-block;">
+    </div>
+  </section>
+
+  <!-- SLIDE 6: LEG LENGTH NORMALIZATION -->
+  <section>
+    <div class="pipeline">
+      <span>INPUT</span><span>PERCEPTION</span><span class="active">SIGNAL</span><span>LOGIC &amp; OUTPUT</span>
+    </div>
+    <h2>Leg Length Normalization</h2>
+    <div class="grid2-even">
+      <div>
+        <p><strong>Leg length</strong> = hip → knee → ankle segment length.</p>
+        <ul>
+          <li>Different runners have different body sizes</li>
+          <li>Without a treadmill, distance to the camera can drift over the clip</li>
+        </ul>
+      </div>
+      <div class="stat-block">
+        <div class="stat-label" style="margin-bottom:6px;">NORMALIZED SIGNAL</div>
+        <div class="mono" style="font-size:0.9em;">signal_norm =<br>signal_px / leg_length_px</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 7: LOGIC INTRO -->
+  <section>
+    <div class="pipeline">
+      <span>INPUT</span><span>PERCEPTION</span><span>SIGNAL</span><span class="active">LOGIC &amp; OUTPUT</span>
+    </div>
+    <h2>Logic &amp; Output</h2>
+    <p>Each misposture uses its own calculation on top of the normalized signals, and its own threshold. Six mispostures were analyzed — walk through them on the following slides</p>
+    <div class="signal-tag">LIVE DEMO — walked through in the Jupyter notebook</div>
+  </section>
+
+  <!-- SLIDE 8: REFLECTION -->
+  <section>
+    <div class="pipeline">
+      <span>INPUT</span><span>PERCEPTION</span><span>SIGNAL</span><span class="active">LOGIC &amp; OUTPUT</span>
+    </div>
+    <h2>Reflection</h2>
+    <div class="reflect-grid">
+      <div class="limit">
+        <h4>TREADMILL WOULD HAVE HELPED</h4>
+        <p>A fixed camera distance would've killed the leg-length drift and cleaned up every signal downstream.</p>
+      </div>
+      <div class="limit">
+        <h4>SIDE-VIEW LIMITATION</h4>
+        <p>Only catches sagittal-plane issues — something like <strong>knee valgus</strong> needs a frontal angle.</p>
+      </div>
+      <div class="limit">
+        <h4>CONTACT / TOE-OFF DETECTION</h4>
+        <p>Hardest signal to get right — video quality mattered a lot, and some frames were just ambiguous.</p>
+      </div>
+      <div class="limit">
+        <h4>THRESHOLD DEFINITION</h4>
+        <p>We're not biomechanics experts, and there's no official reference for most thresholds — we had to estimate.</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    controls: true,
+    progress: true,
+    center: false,
+    transition: 'slide',
+    transitionSpeed: 'fast',
+    width: 1280,
+    height: 720,
+    margin: 0.06,
+    slideNumber: true
+  });
+</script>
+</body>
+</html>
