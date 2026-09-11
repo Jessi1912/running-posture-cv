@@ -81,9 +81,121 @@ def plot_signal_frames(frames, results, value_key, threshold, flag_label, ok_lab
     
 
 
+def plot_overstride_frames(frames, results, ankle_x, ankle_y, hip_x, threshold,
+                            flag_label="OVERSTRIDING", ok_label="OK",
+                            n_cols=2, figsize_per_cell=(6, 6)):
+    """
+    Display overstriding contact frames with a horizontal line drawn from the
+    ankle to the hip's x position, so the flagged horizontal reach is visible
+    on the frame itself instead of only as a number in the title.
+
+    Args:
+        frames: Sequence of BGR frames indexable by frame index.
+        results: List of dicts from calculate_overstriding, each with
+            "frame", "normalized_distance", and "overstriding".
+        ankle_x, ankle_y, hip_x: Per-frame coordinate arrays for the
+            contact-side ankle and hip (e.g. x_smooth_ankle_R, hip_x_R).
+        threshold: Normalized-distance threshold used for the flag label.
+        flag_label, ok_label: Titles used for flagged vs. non-flagged frames.
+        n_cols: Number of columns in the grid (default 2).
+    """
+    n = len(results)
+    n_rows = math.ceil(n / n_cols)
+
+    fig, axes = plt.subplots(
+        n_rows, n_cols,
+        figsize=(figsize_per_cell[0] * n_cols, figsize_per_cell[1] * n_rows)
+    )
+    axes = np.atleast_1d(axes).flatten()
+
+    for ax, r in zip(axes, results):
+        frame_idx = r["frame"]
+        value = r["normalized_distance"]
+        flagged = r.get("overstriding", value > threshold)
+        label = flag_label if flagged else ok_label
+        line_color = "red" if flagged else "limegreen"
+
+        frame = frames[frame_idx]
+        ax.imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+
+        ax_px, ay_px = ankle_x[frame_idx], ankle_y[frame_idx]
+        hx_px = hip_x[frame_idx]
+
+        ax.plot([ax_px, hx_px], [ay_px, ay_px], color=line_color, linewidth=3, solid_capstyle="round")
+        ax.scatter(ax_px, ay_px, c="yellow", s=40, zorder=5, label="Ankle")
+        ax.scatter(hx_px, ay_px, c="cyan", s=40, zorder=5, label="Hip x")
+
+        ax.set_title(f"Frame {frame_idx}\nnormalized_distance: {value:.3f} — {label}")
+        ax.axis("off")
+
+    for ax in axes[n:]:
+        ax.axis("off")
+
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_knee_flexion_frames(frames, results, hip_x, hip_y, knee_x, knee_y, ankle_x, ankle_y,
+                              threshold_angle, flag_label="STRAIGHT (risk)", ok_label="OK",
+                              n_cols=2, figsize_per_cell=(6, 6)):
+    """
+    Display knee-flexion contact frames with the hip-knee-ankle segments drawn
+    on top and the measured knee angle annotated at the knee joint, so the
+    angle in the title can be checked visually against the actual leg pose.
+
+    Args:
+        frames: Sequence of BGR frames indexable by frame index.
+        results: List of dicts from analyze_knee_flexion, each with
+            "frame", "knee_angle", and "straight_landing".
+        hip_x, hip_y, knee_x, knee_y, ankle_x, ankle_y: Per-frame coordinate
+            arrays for the contact-side leg.
+        threshold_angle: Angle threshold used for the flag label.
+        flag_label, ok_label: Titles used for flagged vs. non-flagged frames.
+        n_cols: Number of columns in the grid (default 2).
+    """
+    n = len(results)
+    n_rows = math.ceil(n / n_cols)
+
+    fig, axes = plt.subplots(
+        n_rows, n_cols,
+        figsize=(figsize_per_cell[0] * n_cols, figsize_per_cell[1] * n_rows)
+    )
+    axes = np.atleast_1d(axes).flatten()
+
+    for ax, r in zip(axes, results):
+        frame_idx = r["frame"]
+        angle = r["knee_angle"]
+        flagged = r.get("straight_landing", angle > threshold_angle)
+        label = flag_label if flagged else ok_label
+        line_color = "red" if flagged else "limegreen"
+
+        frame = frames[frame_idx]
+        ax.imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+
+        hx, hy = hip_x[frame_idx], hip_y[frame_idx]
+        kx, ky = knee_x[frame_idx], knee_y[frame_idx]
+        ax_, ay = ankle_x[frame_idx], ankle_y[frame_idx]
+
+        ax.plot([hx, kx, ax_], [hy, ky, ay], color=line_color, linewidth=3,
+                marker="o", markersize=6, markerfacecolor="yellow", markeredgecolor="black")
+        ax.annotate(f"{angle:.0f}°", (kx, ky), xytext=(10, -10), textcoords="offset points",
+                    color="white", fontsize=13, fontweight="bold",
+                    bbox=dict(boxstyle="round,pad=0.2", facecolor=line_color, alpha=0.8))
+
+        ax.set_title(f"Frame {frame_idx}\nknee_angle: {angle:.1f}° — {label}")
+        ax.axis("off")
+
+    for ax in axes[n:]:
+        ax.axis("off")
+
+    plt.tight_layout()
+    plt.show()
+
+
 def plot_both_ankles(x_smooth_L, y_smooth_L, x_smooth_R, y_smooth_R):
     """
-    Plot smoothed X/Y coordinates for both ankles on one combined graph.
+    Plot smoothed X/Y coordinates for both ankles as two stacked subplots
+    (X position on top, Y position on bottom).
 
     Parameters:
         x_smooth_L, y_smooth_L : smoothed left ankle coordinate arrays
@@ -91,20 +203,22 @@ def plot_both_ankles(x_smooth_L, y_smooth_L, x_smooth_R, y_smooth_R):
     """
     frames = np.arange(len(x_smooth_L))
 
-    plt.figure(figsize=(12, 5))
+    fig, (ax_x, ax_y) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
 
-    # Left ankle
-    plt.plot(frames, x_smooth_L, color="tab:blue", linewidth=2, label="Left Ankle X")
-    # plt.plot(frames, y_smooth_L, color="tab:cyan", linewidth=2, label="Left Ankle Y")
+    # X position
+    ax_x.plot(frames, x_smooth_L, color="tab:blue", linewidth=2, label="Left Ankle X")
+    ax_x.plot(frames, x_smooth_R, color="tab:red", linewidth=2, label="Right Ankle X")
+    ax_x.set_ylabel("X pixel coordinate")
+    ax_x.set_title("Left vs Right Ankle Coordinates (Smoothed)")
+    ax_x.legend()
 
-    # Right ankle
-    plt.plot(frames, x_smooth_R, color="tab:red", linewidth=2, label="Right Ankle X")
-    # plt.plot(frames, y_smooth_R, color="tab:orange", linewidth=2, label="Right Ankle Y")
+    # Y position
+    ax_y.plot(frames, y_smooth_L, color="tab:cyan", linewidth=2, label="Left Ankle Y")
+    ax_y.plot(frames, y_smooth_R, color="tab:orange", linewidth=2, label="Right Ankle Y")
+    ax_y.set_xlabel("Frame")
+    ax_y.set_ylabel("Y pixel coordinate")
+    ax_y.legend()
 
-    plt.xlabel("Frame")
-    plt.ylabel("Pixel coordinate")
-    plt.title("Left vs Right Ankle Coordinates (Smoothed)")
-    plt.legend()
     plt.tight_layout()
     plt.show()
     
