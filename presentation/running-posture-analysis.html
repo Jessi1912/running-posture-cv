@@ -196,7 +196,7 @@
   <!-- SLIDE 2: DATA -->
   <section>
     <div class="pipeline">
-      <span class="active">INPUT</span><span>PERCEPTION</span><span>SIGNAL</span><span>LOGIC &amp; OUTPUT</span>
+      <span class="active">INPUT</span><span>PERCEPTION</span><span>SIGNAL</span><span>LOGIC &amp; OUTPUT</span><span>CONCLUSION</span>
     </div>
     <h2>The Data</h2>
     <div class="grid2">
@@ -216,7 +216,7 @@
   <!-- SLIDE 3: PERCEPTION -->
   <section>
     <div class="pipeline">
-      <span>INPUT</span><span class="active">PERCEPTION</span><span>SIGNAL</span><span>LOGIC &amp; OUTPUT</span>
+      <span>INPUT</span><span class="active">PERCEPTION</span><span>SIGNAL</span><span>LOGIC &amp; OUTPUT</span><span>CONCLUSION</span>
     </div>
     <h2>Perception</h2>
     <p style="margin-bottom:18px;">We compared two pose-estimation models before choosing one for the pipeline.</p>
@@ -234,7 +234,7 @@
   <!-- SLIDE 4: SIGNAL - KEYPOINTS -->
   <section>
     <div class="pipeline">
-      <span>INPUT</span><span>PERCEPTION</span><span class="active">SIGNAL</span><span>LOGIC &amp; OUTPUT</span>
+      <span>INPUT</span><span>PERCEPTION</span><span class="active">SIGNAL</span><span>LOGIC &amp; OUTPUT</span><span>CONCLUSION</span>
     </div>
     <h2>Signal — Keypoints</h2>
     <div class="grid2-even" style="grid-template-columns:1.4fr 0.6fr;">
@@ -272,7 +272,7 @@
   <!-- SLIDE 5: CONTACT & TOE-OFF -->
   <section>
     <div class="pipeline">
-      <span>INPUT</span><span>PERCEPTION</span><span class="active">SIGNAL</span><span>LOGIC &amp; OUTPUT</span>
+      <span>INPUT</span><span>PERCEPTION</span><span class="active">SIGNAL</span><span>LOGIC &amp; OUTPUT</span><span>CONCLUSION</span>
     </div>
     <h2>Contact &amp; Toe-Off</h2>
     <div class="grid2-even">
@@ -294,7 +294,7 @@
   <!-- SLIDE 5.5: PHASES -->
   <section>
     <div class="pipeline">
-      <span>INPUT</span><span>PERCEPTION</span><span class="active">SIGNAL</span><span>LOGIC &amp; OUTPUT</span>
+      <span>INPUT</span><span>PERCEPTION</span><span class="active">SIGNAL</span><span>LOGIC &amp; OUTPUT</span><span>CONCLUSION</span>
     </div>
     <h2 style="margin-bottom:18px;">Phases</h2>
     <div class="phase-bar" style="height:32px; margin:8px 0;">
@@ -313,7 +313,7 @@
   <!-- SLIDE 6: LEG LENGTH NORMALIZATION -->
   <section>
     <div class="pipeline">
-      <span>INPUT</span><span>PERCEPTION</span><span class="active">SIGNAL</span><span>LOGIC &amp; OUTPUT</span>
+      <span>INPUT</span><span>PERCEPTION</span><span class="active">SIGNAL</span><span>LOGIC &amp; OUTPUT</span><span>CONCLUSION</span>
     </div>
     <h2>Leg Length Normalization</h2>
     <div class="grid2-even">
@@ -334,17 +334,17 @@
   <!-- SLIDE 7: LOGIC INTRO -->
   <section>
     <div class="pipeline">
-      <span>INPUT</span><span>PERCEPTION</span><span>SIGNAL</span><span class="active">LOGIC &amp; OUTPUT</span>
+      <span>INPUT</span><span>PERCEPTION</span><span>SIGNAL</span><span class="active">LOGIC &amp; OUTPUT</span><span>CONCLUSION</span>
     </div>
     <h2>Logic &amp; Output</h2>
-    <p>Each misposture uses its own calculation on top of the normalized signals, and its own threshold. Six mispostures were analyzed — walk through them on the following slides</p>
+    <p>Each misposture uses its own calculation on top of the normalized signals, and its own threshold. Six mispostures were analyzed — walk through them now</p>
     <div class="signal-tag">LIVE DEMO — walked through in the Jupyter notebook</div>
   </section>
 
   <!-- SLIDE 8: REFLECTION -->
   <section>
     <div class="pipeline">
-      <span>INPUT</span><span>PERCEPTION</span><span>SIGNAL</span><span class="active">LOGIC &amp; OUTPUT</span>
+      <span>INPUT</span><span>PERCEPTION</span><span>SIGNAL</span><span>LOGIC &amp; OUTPUT</span><span class="active">CONCLUSION</span>
     </div>
     <h2>Reflection</h2>
     <div class="reflect-grid">
@@ -364,6 +364,38 @@
         <h4>THRESHOLD DEFINITION</h4>
         <p>We're not biomechanics experts, and there's no official reference for most thresholds — we had to estimate.</p>
       </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 9: HOW WE WORKED -->
+  <section>
+    <div class="pipeline">
+      <span>INPUT</span><span>PERCEPTION</span><span>SIGNAL</span><span>LOGIC &amp; OUTPUT</span><span class="active">CONCLUSION</span>
+    </div>
+    <h2>Collaboration</h2>
+    <div class="reflect-grid" style="grid-template-columns:repeat(3,1fr);">
+      <div class="limit">
+        <h4>SHARED GIT REPOSITORY</h4>
+        <p>Developed in parallel on a shared repo, with commits tracking each stage of the pipeline.</p>
+      </div>
+      <div class="limit">
+        <h4>MERGE CONFLICTS</h4>
+        <p>Worked through conflicts as our changes overlapped, rather than around them.</p>
+      </div>
+      <div class="limit">
+        <h4>CLEAN REFACTORING</h4>
+        <p>Refactored so core building blocks — rule checking and visualization — are cleanly separated and reusable.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE: REPOSITORY -->
+  <section style="align-items:center; text-align:center;">
+    <div class="kicker">THANK YOU</div>
+    <h2 style="border:none;">Code &amp; Repository</h2>
+    <div class="card" style="margin:0 auto;">
+      <h4>GITHUB</h4>
+      <p class="mono" style="font-size:1.1em;"><a href="https://github.com/Jessi1912/running-posture-cv" target="_blank">github.com/Jessi1912/running-posture-cv</a></p>
     </div>
   </section>
 
